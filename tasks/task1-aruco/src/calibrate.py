@@ -41,6 +41,16 @@ def create_board_points(pattern_size, square_size_meters):
     #         z = 0 because the chessboard is a flat plane
     #         points[index] = (x, y, z)
     # return points as float32
+    cols,rows=pattern_size
+    points=np.zeros((cols*rows,3),dtype=np.float32)
+    for row in range(rows):
+        for col in range(cols):
+            index=row*cols+col
+            x=col*square_size_meters
+            y=row*square_size_meters
+            z=0
+            points[index] = (x, y, z)
+    return points.astype(np.float32)
     raise NotImplementedError("create_board_points is not implemented")
 
 
@@ -53,6 +63,13 @@ def detect_calibration_points(gray_image, pattern_size):
     # stop_criteria = max iterations plus sub-pixel epsilon threshold
     # refined = cv2.cornerSubPix(gray_image, corners, window size, dead zone, stop_criteria)
     # return true and refined corner positions
+    flags=cv2.CALIB_CB_ADAPTIVE_THRESH+cv2.CALIB_CB_NORMALIZE_IMAGE
+    found,corners=cv2.findChessboardCorners(gray_image,pattern_size,flags)
+    if not found:
+        return False, np.array([])
+    stop_criteria=(cv2.TERM_CRITERIA_EPS+cv2.TERM_CRITERIA_MAX_ITER,40,0.001)
+    refined=cv2.cornerSubPix(gray_image,corners,(11,11),(-1,-1),stop_criteria)
+    return True, refined
     raise NotImplementedError("detect_calibration_points is not implemented")
 
 
@@ -81,6 +98,11 @@ def calibrate_camera(object_points, image_points, image_size):
     # if OpenCV fails or returns non-finite values:
     #     raise a clear error
     # return camera_matrix and dist_coeffs
+    result=cv2.calibrateCamera(object_points,image_points,image_size,None,None)
+    _,camera_matrix,dist_coeffs,_,_=result
+    if not _is_valid_calibration_result((camera_matrix, dist_coeffs)):
+        raise ValueError("Camera calibration failed or returned invalid parameters.")
+    return camera_matrix, dist_coeffs
     raise NotImplementedError("calibrate_camera is not implemented")
 
 
