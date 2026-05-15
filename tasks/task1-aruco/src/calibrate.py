@@ -20,8 +20,8 @@ CALIBRATION_IMAGE_GLOB = "*.jpg"
 # set PATTERN_SIZE to the number of inner chessboard corners, not square count
 # measure one square side length in meters and store it in SQUARE_SIZE_METERS
 CALIBRATION_TARGET_TYPE = "chessboard"
-PATTERN_SIZE = (-1, -1)
-SQUARE_SIZE_METERS = -1
+PATTERN_SIZE = (6, 6)
+SQUARE_SIZE_METERS = 0.0195
 
 CAMERA_PARAMS_PATH = TASK_ROOT / "output" / "camera_params.json"
 

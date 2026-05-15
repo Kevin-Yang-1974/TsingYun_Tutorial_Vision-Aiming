@@ -20,7 +20,7 @@ ARUCO_VIDEO_PATH = TASK_ROOT / "data" / "aruco" / "aruco.mp4"
 # choose the same dictionary that was used to print the marker
 # measure the black marker side length in meters and store it in MARKER_LENGTH_METERS
 ARUCO_DICTIONARY = "DICT_4X4_50"
-MARKER_LENGTH_METERS = 0.05
+MARKER_LENGTH_METERS = 0.016
 
 ARUCO_OUTPUT_VIDEO_PATH = TASK_ROOT / "output" / "aruco_result.mp4"
 
@@ -121,7 +121,7 @@ def _is_valid_pose_result(result):
 
 def estimate_marker_pose(marker_corners, marker_length_meters, camera_matrix, dist_coeffs):
     object_points = create_marker_object_points(marker_length_meters)
-    success,rvec,tvec=cv2.solvePnP(object_points,marker_corners,camera_matrix,dist_coeffs)
+    success,rvec,tvec=cv2.solvePnP(object_points,marker_corners.reshape(-1,2),camera_matrix,dist_coeffs,flags=cv2.SOLVEPNP_IPPE_SQUARE)
     if not success or not _is_valid_pose_result((rvec,tvec)):
         raise ValueError("Pose estimation failed or returned invalid results.")
     return rvec, tvec
@@ -157,7 +157,7 @@ def render_virtual_object(frame, rvec, tvec, camera_matrix, dist_coeffs, vertice
     for face in faces_np:
         pts=projected_points[face].reshape(-1,1,2).astype(np.int32)
         cv2.polylines(frame,[pts],isClosed=True,color=(0,255,0),thickness=2)
-    raise NotImplementedError("render_virtual_object is not implemented")
+    
 
 
 def process_frame(frame, dictionary, camera_matrix, dist_coeffs, vertices, faces):
