@@ -7,6 +7,7 @@ from pathlib import Path
 
 import torch
 from torch import nn
+from torchvision import transforms
 
 TASK_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MNIST_DATA_DIR = TASK_ROOT / "data"
@@ -17,8 +18,8 @@ def download_mnist_dataset(data_dir: Path = DEFAULT_MNIST_DATA_DIR) -> Path:
     import torchvision
 
     data_dir.mkdir(parents=True, exist_ok=True)
-    torchvision.datasets.MNIST(root=data_dir, train=True, download=True)
-    torchvision.datasets.MNIST(root=data_dir, train=False, download=True)
+    torchvision.datasets.MNIST(root=data_dir, train=True, download=True,transform=transforms.Compose([transforms.ToTensor()]))
+    torchvision.datasets.MNIST(root=data_dir, train=False, download=True,transform=transforms.Compose([transforms.ToTensor()]))
     return data_dir / "MNIST"
 
 
@@ -27,11 +28,48 @@ class MNISTClassifier(nn.Module):
 
     def __init__(self, input_size: int = 28 * 28, num_classes: int = 10) -> None:
         super().__init__()
+        self.conv1=nn.Conv2d(1,32,kernel_size=5,padding=2)
+        self.relu1=nn.ReLU()
+        self.batchnorm1=nn.BatchNorm2d(32)
+        self.conv2=nn.Conv2d(32,64,kernel_size=5,padding=2)
+        self.relu2=nn.ReLU()
+        self.batchnorm2=nn.BatchNorm2d(64)
+        self.conv3=nn.Conv2d(64,32,kernel_size=5,padding=2,stride=2)
+        self.relu3=nn.ReLU()    
+        self.batchnorm3=nn.BatchNorm2d(32)
+        self.fc1=nn.Linear(32*14*14,128)
+        self.relu4=nn.ReLU()
+        self.fc2=nn.Linear(128,64)
+        self.relu5=nn.ReLU()
+        self.fc3=nn.Linear(64,num_classes)
+        self.sequence1=nn.Sequential(
+            self.conv1,
+            self.relu1,
+            self.batchnorm1,
+            self.conv2,
+            self.relu2,
+            self.batchnorm2,
+            self.conv3,
+            self.relu3,
+            self.batchnorm3           
+        )
+        self.sequence2=nn.Sequential(
+            self.fc1,
+            self.relu4,
+            self.fc2,
+            self.relu5,
+            self.fc3
+        )
+    
         # TODO(student): fill in your custom model architectures
-        raise NotImplementedError("MNIST classifier model logic not implemented!")
+        #raise NotImplementedError("MNIST classifier model logic not implemented!")
 
     def forward(self, inputs):
         # TODO(student): fill in your forward process according to your model
+        x=self.sequence1(inputs)
+        x=x.view(x.size(0),-1)
+        x=self.sequence2(x)
+        return x
         raise NotImplementedError("MNIST classifier forward logic not implemented!")
 
 
@@ -43,6 +81,12 @@ def select_training_device(torch_module) -> str:
     #     return "mps" for Apple Silicon GPU training
     # otherwise:
     #     return "cpu" so training still works without an accelerator
+    if torch_module.cuda.is_available():
+        return "cuda"
+    elif torch_module.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"
     raise NotImplementedError("select_training_device is not implemented")
 
 
@@ -61,6 +105,41 @@ def train_mnist_classifier(dataset_dir: Path, output_path: Path) -> Path:
     # train until validation accuracy is stable
     # save the trained model weights or serialized estimator to output_path
     # return output_path
+    device = torch.device(select_training_device(torch))
+    train_dataset = torchvision.datasets.MNIST(root=dataset_dir.parent, train=True, download=False, transform=transforms.Compose([transforms.ToTensor()]))
+    val_dataset = torchvision.datasets.MNIST(root=dataset_dir.parent, train=False, download=False, transform=transforms.Compose([transforms.ToTensor()]))
+    train_loader=DataLoader(train_dataset,batch_size=64,shuffle=True)
+    val_loader=DataLoader(val_dataset,batch_size=64,shuffle=False)
+    model=MNISTClassifier().to(device)
+    criterion=nn.CrossEntropyLoss()
+    optimizer=torch.optim.Adam(model.parameters(),lr=0.001)
+    model.train()
+    for epoch in range(5):
+        correct=0
+        total=0
+        for images,labels in train_loader:
+            images,labels=images.to(device),labels.to(device)
+            outputs=model(images)
+            loss=criterion(outputs,labels)
+            _, predicted = torch.max(outputs, 1)
+            total+=predicted.size(0)
+            correct+=(predicted==labels).sum().item()
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+        print(f"Epoch {epoch+1}, Loss: {loss.item():.4f}, Accuracy: {correct/total:.4f}")
+    model.eval()
+    correct=0
+    total=0
+    for images,labels in val_loader:
+        images,labels=images.to(device),labels.to(device)
+        outputs=model(images)
+        _, predicted = torch.max(outputs, 1)
+        total+=predicted.size(0)
+        correct+=(predicted==labels).sum().item()
+    print(f"Validation Accuracy: {correct/total:.4f}")
+    torch.save(model.state_dict(), output_path)
+    return output_path
     raise NotImplementedError("MNIST training is not implemented")
 
 
