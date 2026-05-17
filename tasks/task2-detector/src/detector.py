@@ -147,7 +147,7 @@ def detect_bbox(image: ImageLike, threshold: int = 200) -> list[CornerSet]:
     contours,_=cv2.findContours(red_mask,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     corner_candidates=[]
     for contour in contours:
-        if cv2.contourArea(contour)<100:
+        if cv2.contourArea(contour)<5:
             continue
         polygon=cv2.approxPolyDP(contour,epsilon=0.02*cv2.arcLength(contour,True),closed=True)
         if len(polygon)!=4:
@@ -174,10 +174,11 @@ def detect_mnist_board(image: ImageLike, threshold: int = 200) -> list[Detection
     # Step 4: package the remaining results as Detection objects.
     corner_candidates=detect_bbox(image,threshold)
     crops=crop_bbox(image,corner_candidates)
+    print(f"[detector] bboxes={len(corner_candidates)} crops={len(crops)} threshold={threshold}")
     detections=[]
     for corners,crop in zip(corner_candidates, crops):
-        digit, confidence=classify_mnist_digit(crop)
-        if confidence<0.5:
+        digit, confidence=classify_mnist_digit(crop[32:-32,32:-32])
+        if confidence<0.2:
             continue
         bbox=_bbox_from_corners(corners)
         detection=Detection(class_id=digit,confidence=confidence,bbox=bbox,corners=corners)

@@ -21,7 +21,9 @@ RgbPixel = tuple[int, int, int]
 ImageLike = np.ndarray
 
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parents[1] / "models" / "mnist_classifier.npz"
-
+model=MNISTClassifier()
+model.load_state_dict(torch.load(DEFAULT_MODEL_PATH))
+model.eval()
 
 def preprocess_mnist_crop(board_crop: ImageLike) -> np.ndarray:
     # TODO(student): Convert a detected board crop into classifier input.
@@ -31,8 +33,8 @@ def preprocess_mnist_crop(board_crop: ImageLike) -> np.ndarray:
     # convert the result to the tensor/array shape expected by your classifier
     # return normalized input array
     board_crop=np.asarray(board_crop,dtype=np.uint8)
-    hsv=cv2.cvtColor(board_crop,cv2.COLOR_BGR2HSV)
-    v=hsv[:,:,2]
+    gray=cv2.cvtColor(board_crop,cv2.COLOR_RGB2GRAY)
+    _,v=cv2.threshold(gray,127,255,cv2.THRESH_BINARY)
     v_resized=cv2.resize(v,(28,28))[np.newaxis,np.newaxis,:,:]
     v_normalized=v_resized/255.0
     return torch.tensor(v_normalized, dtype=torch.float32)
@@ -75,7 +77,7 @@ def classify_mnist_digit(board_crop: ImageLike, model_path: Path = DEFAULT_MODEL
     # digit, confidence = predict_mnist_digit(model, model_input)
     # return digit, confidence
     model_input = preprocess_mnist_crop(board_crop)
-    model = load_mnist_model(model_path)
+    # model = load_mnist_model(model_path)
     digit, confidence = predict_mnist_digit(model, model_input)
     return digit, confidence
     raise NotImplementedError("classify_mnist_digit is not implemented")
