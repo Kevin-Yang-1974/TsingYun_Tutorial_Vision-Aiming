@@ -42,6 +42,7 @@ private:
         void reset(double measured_position);
         void predict(double dt, double process_noise);
         void update(double measured_position, double measurement_noise);
+        AxisFilter forecast(double dt, double process_noise) const;
     };
 
     TrackState stateFromFilters() const;
