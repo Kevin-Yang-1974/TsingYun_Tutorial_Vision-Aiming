@@ -19,7 +19,7 @@ def _library_path() -> Path:
 
     if sys.platform == "win32":
         build_dir = Path(env_dir) if env_dir else REPO_ROOT / "build" / "hw-ninja"
-        return build_dir / "tasks" / "task3-tracker" / "libhw_task3_tracker_shared.dll"
+        return build_dir / "tasks" / "task3-tracker" / "hw_task3_tracker_shared.dll"
 
     build_dir = Path(env_dir) if env_dir else REPO_ROOT / "build" / "hw"
     return build_dir / "tasks" / "task3-tracker" / "libhw_task3_tracker_shared.so"
@@ -29,6 +29,11 @@ def _resolve_library_path() -> Path:
     candidate = _library_path()
     if candidate.exists():
         return candidate
+
+    if sys.platform == "win32":
+        legacy_candidate = candidate.with_name("libhw_task3_tracker_shared.dll")
+        if legacy_candidate.exists():
+            return legacy_candidate
 
     raise FileNotFoundError(
         "Could not find the task3 shared library. Build the C++ targets first.\n"
@@ -58,6 +63,8 @@ _lib.tracker_destroy.argtypes = [ctypes.c_void_p]
 _lib.tracker_is_tracking.argtypes = [ctypes.c_void_p]
 _lib.tracker_is_tracking.restype = ctypes.c_int
 _lib.tracker_reset.argtypes = [ctypes.c_void_p]
+_lib.tracker_set_process_noise.argtypes = [ctypes.c_void_p, ctypes.c_double]
+_lib.tracker_set_measurement_noise.argtypes = [ctypes.c_void_p, ctypes.c_double]
 _lib.tracker_get_position.argtypes = [
     ctypes.c_void_p,
     ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double), ctypes.POINTER(ctypes.c_double),
@@ -100,6 +107,18 @@ class KalmanTracker:
 
     def reset(self) -> None:
         _lib.tracker_reset(self._ptr)
+
+    def set_process_noise(self, process_noise: float) -> None:
+        _lib.tracker_set_process_noise(self._ptr, process_noise)
+        _check_tracker_error()
+
+    def set_measurement_noise(self, measurement_noise: float) -> None:
+        _lib.tracker_set_measurement_noise(self._ptr, measurement_noise)
+        _check_tracker_error()
+
+    def set_noise(self, process_noise: float, measurement_noise: float) -> None:
+        self.set_process_noise(process_noise)
+        self.set_measurement_noise(measurement_noise)
 
     def get_position(self) -> tuple[float, float, float]:
         ox, oy, oz = ctypes.c_double(), ctypes.c_double(), ctypes.c_double()

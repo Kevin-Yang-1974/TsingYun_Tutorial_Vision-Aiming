@@ -23,10 +23,10 @@ namespace hw
     {
         position = measured_position;
         velocity = 0.0;
-        p00 = 1.0;
+        p00 = 100.0;
         p01 = 0.0;
         p10 = 0.0;
-        p11 = 1.0;
+        p11 = 100.0;
     }
 
     void KalmanTracker::AxisFilter::predict(double dt, double process_noise)
