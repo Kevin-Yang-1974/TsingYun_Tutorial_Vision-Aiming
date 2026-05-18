@@ -34,10 +34,10 @@ private:
     {
         double position{0.0};
         double velocity{0.0};
-        double p00{1.0};
+        double p00{100.0};
         double p01{0.0};
         double p10{0.0};
-        double p11{1.0};
+        double p11{100.0};
 
         void reset(double measured_position);
         void predict(double dt, double process_noise);

@@ -85,6 +85,32 @@ extern "C"
         }
     }
 
+    HW_TRACKER_EXPORT void tracker_set_process_noise(void* tracker, double process_noise)
+    {
+        try
+        {
+            static_cast<hw::KalmanTracker*>(tracker)->set_process_noise(process_noise);
+            clear_error();
+        }
+        catch (const std::exception& e)
+        {
+            set_error(e.what());
+        }
+    }
+
+    HW_TRACKER_EXPORT void tracker_set_measurement_noise(void* tracker, double measurement_noise)
+    {
+        try
+        {
+            static_cast<hw::KalmanTracker*>(tracker)->set_measurement_noise(measurement_noise);
+            clear_error();
+        }
+        catch (const std::exception& e)
+        {
+            set_error(e.what());
+        }
+    }
+
     HW_TRACKER_EXPORT void tracker_get_position(
         void* tracker,
         double* out_x, double* out_y, double* out_z)
