@@ -52,52 +52,34 @@ class MNISTClassifier(nn.Module):
             self.fc6
         )
     
-        # TODO(student): fill in your custom model architectures
-        #raise NotImplementedError("MNIST classifier model logic not implemented!")
+        
 
     def forward(self, inputs):
-        # TODO(student): fill in your forward process according to your model
         x=nn.Flatten()(inputs)
         x=self.sequence(x)
         return x
-        raise NotImplementedError("MNIST classifier forward logic not implemented!")
-
+        
 
 def select_training_device(torch_module) -> str:
-    # TODO(student): Pick the best accelerator available on the student's PC.
-    # if torch reports CUDA is available:
-    #     return "cuda" for NVIDIA GPU training
-    # else if torch reports MPS is available:
-    #     return "mps" for Apple Silicon GPU training
-    # otherwise:
-    #     return "cpu" so training still works without an accelerator
     if torch_module.cuda.is_available():
         return "cuda"
     elif torch_module.backends.mps.is_available():
         return "mps"
     else:
         return "cpu"
-    raise NotImplementedError("select_training_device is not implemented")
 
 
 def train_mnist_classifier(dataset_dir: Path, output_path: Path) -> Path:
     
     from torch.utils.data import DataLoader, random_split
     import torchvision
-    # TODO(student): Train the MNIST digit classifier used by model.py.
-    # device = select_training_device(torch)
-    # move the model and each batch to device
-    # read training images and labels from dataset_dir
-    # split examples into training and validation sets
-    # preprocess every image the same way model.preprocess_mnist_crop does
-    # model = MNISTClassifier()
-    # choose loss function, optimizer, batch size, and number of epochs
-    # train until validation accuracy is stable
-    # save the trained model weights or serialized estimator to output_path
-    # return output_path
     device = torch.device(select_training_device(torch))
-    train_dataset = torchvision.datasets.MNIST(root=dataset_dir.parent, train=True, download=False,transform=torchvision.transforms.ToTensor())
-    val_dataset = torchvision.datasets.MNIST(root=dataset_dir.parent, train=False, download=False,transform=torchvision.transforms.ToTensor())
+    transform=transform = torchvision.transforms.Compose([
+    torchvision.transforms.Grayscale(num_output_channels=1), 
+    torchvision.transforms.ToTensor(),                       
+    torchvision.transforms.Lambda(lambda x: (x > 0.5).float()), ])
+    train_dataset = torchvision.datasets.MNIST(root=dataset_dir.parent, train=True, download=False,transform=transform)
+    val_dataset = torchvision.datasets.MNIST(root=dataset_dir.parent, train=False, download=False,transform=transform)
     train_loader=DataLoader(train_dataset,batch_size=64,shuffle=True)
     val_loader=DataLoader(val_dataset,batch_size=64,shuffle=False)
     model=MNISTClassifier().to(device)
@@ -130,7 +112,7 @@ def train_mnist_classifier(dataset_dir: Path, output_path: Path) -> Path:
     print(f"Validation Accuracy: {correct/total:.4f}")
     torch.save(model.state_dict(), output_path)
     return output_path
-    raise NotImplementedError("MNIST training is not implemented")
+    
 
 
 def parse_args() -> argparse.Namespace:
