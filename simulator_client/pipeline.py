@@ -34,8 +34,7 @@ class FallbackPipeline:
         self.board_width_meters = board_width_meters
         self.board_height_meters = board_height_meters
         self.latency_multiplier = latency_multiplier
-        # TODO: fine-tune your arguments here
-        self.tracker = KalmanTracker(process_noise=1.5, measurement_noise=0.7)
+        self.tracker = KalmanTracker(process_noise=1.0, measurement_noise=0.7)
         self._last_time: float | None = None
         self._last_target: detecter.Detection | None = None
         self._lost_count: int = 0
@@ -53,41 +52,9 @@ class FallbackPipeline:
             good = [d for d in detections if d.class_id >= 0 and d.confidence >= 0.2]
             if not good:
                 good = detections  # fallback: use any detection
-
-            if not good:
-                self._lost_count += 1
-                if self.tracker.is_tracking and self._lost_count <= 20:
-                    px, py, pz = self.tracker.predict(self.latency * self.latency_multiplier)
-                    pz = max(1.0, min(pz, 200.0))
-                    return PipelineResult(
-                        AimMessage(float(px), float(py), float(pz)),
-                        used_fallback=False, reason="coasting",
-                    )
-                self.tracker.reset()
-                return self._center_fallback(image, camera_matrix, f"no target in {len(detections)} detections")
-
-            # self._lost_count = 0
-
+            
             # Estimate 3D positions for all detections
             positions = [self._estimate_position(d, camera_matrix) for d in good]
-
-            # # Nearest-neighbor: use current filtered position
-            # if self.tracker.is_tracking:
-            #     pred_x, pred_y, pred_z = self.tracker.get_position()
-            #     best_idx = min(
-            #         range(len(positions)),
-            #         key=lambda i: (positions[i][0] - pred_x)**2
-            #         + (positions[i][1] - pred_y)**2
-            #         + (positions[i][2] - pred_z)**2,
-            #     )
-            # else:
-            #     # No prior: pick the one closest to image center (most central)
-            #     h, w = image.shape[:2]
-            #     best_idx = min(
-            #         range(len(good)),
-            #         key=lambda i: (good[i].bbox.center[0] - w/2)**2
-            #         + (good[i].bbox.center[1] - h/2)**2,
-            #     )
 
             target = self.selector.select(good)
             if target is None:
@@ -110,8 +77,6 @@ class FallbackPipeline:
             if (self._last_target is not None and target.class_id != self._last_target.class_id) or np.sqrt((cur_x-x)**2+(cur_y-y)**2+(cur_z-z)**2)>5.0:
                 self.tracker.reset()
             self._last_target = target
-            
-            # TODO: optionally enable a hard reset here when `class_id` changes
             
             self.tracker.update(cur_x, cur_y, cur_z, dt)
             pred_x, pred_y, pred_z = self.tracker.predict(self.latency * self.latency_multiplier)
