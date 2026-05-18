@@ -31,15 +31,7 @@ namespace hw
 
     void KalmanTracker::AxisFilter::predict(double dt, double process_noise)
     {
-        // TODO(student): Implement the constant-velocity Kalman predict step.
-        // dt = max(dt, 0)
-        // position = position + velocity * dt
-        // F = [[1, dt],
-        //      [0, 1]]
-        // Q = process_noise * [[dt^4 / 4, dt^3 / 2],
-        //                      [dt^3 / 2, dt^2]]
-        // P = F * P * F^T + Q
-        // store the updated position, velocity, and covariance
+        
         dt=std::max(dt, 0.0);
         position+=velocity*dt;
         double F00=1.0, F01=dt, F10=0.0, F11=1.0;
@@ -56,16 +48,7 @@ namespace hw
 
     void KalmanTracker::AxisFilter::update(double measured_position, double measurement_noise)
     {
-        // TODO(student): Implement the 1D position measurement update step.
-        // residual = measured_position - position
-        // H = [1, 0]
-        // S = H * P * H^T + measurement_noise
-        // if S is not positive:
-        //     return without updating
-        // K = P * H^T / S
-        // position = position + K[0] * residual
-        // velocity = velocity + K[1] * residual
-        // P = (I - K * H) * P
+        
         double residual=measured_position-position;
         double H0=1.0, H1=0.0;
         double S = H0 * p00 * H0 + H1 * p10 * H0 + H0 * p01 * H1 + H1 * p11 * H1 + measurement_noise;
@@ -107,15 +90,7 @@ namespace hw
 
     TrackState KalmanTracker::update(const Vec3 &measurement, double dt)
     {
-        // TODO(student): Update tracker state from one measured 3D point.
-        // if tracker is not initialized:
-        //     initialize x, y, z filters with measurement components
-        //     set all velocities to zero
-        //     mark tracker as active
-        //     return current state
-        // predict each axis filter using dt
-        // update each axis filter with its measured coordinate
-        // return position, velocity, and tracking flag
+        
         if(!tracking_){
             x_.reset(measurement.x);
             y_.reset(measurement.y);
@@ -134,11 +109,7 @@ namespace hw
 
     TrackState KalmanTracker::predict(double dt)
     {
-        // TODO(student): Predict target state when a detection is missing.
-        // if tracker is not active:
-        //     return a non-tracking state
-        // predict x, y, z filters with dt
-        // return predicted position and velocity
+        
         if(!tracking_){
             return TrackState{};
         }

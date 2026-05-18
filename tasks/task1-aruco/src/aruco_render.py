@@ -6,27 +6,19 @@ import numpy as np
 
 TASK_ROOT = Path(__file__).resolve().parents[1]
 
-# TODO(student): fill in your camera parameter file from calibrate.py.
-# run calibrate.py first and point this path at the generated camera_params.json
-# the JSON must contain camera_matrix and dist_coeffs
+
 CAMERA_PARAMS_PATH = TASK_ROOT / "output" / "camera_params.json"
 
-# TODO(student): fill in your own ArUco video path.
-# use a video where the marker is clear and not too motion-blurred
-# keep the marker dictionary and physical length below consistent with this video
+
 ARUCO_VIDEO_PATH = TASK_ROOT / "data" / "aruco" / "aruco.mp4"
 
-# TODO(student): fill in your own ArUco settings.
-# choose the same dictionary that was used to print the marker
-# measure the black marker side length in meters and store it in MARKER_LENGTH_METERS
+
 ARUCO_DICTIONARY = "DICT_4X4_50"
 MARKER_LENGTH_METERS = 0.016
 
 ARUCO_OUTPUT_VIDEO_PATH = TASK_ROOT / "output" / "aruco_result.mp4"
 
-# TODO(student): use this path if you want to render one of the provided OBJ models.
-# start with cube.obj while debugging because its shape makes pose errors obvious
-# after the pose is stable, switch to another OBJ model from res/models
+
 MODEL_PATH = TASK_ROOT / "res" / "models" / "cube.obj"
 OUTPUT_DIR = TASK_ROOT / "output"
 
@@ -125,27 +117,11 @@ def estimate_marker_pose(marker_corners, marker_length_meters, camera_matrix, di
     if not success or not _is_valid_pose_result((rvec,tvec)):
         raise ValueError("Pose estimation failed or returned invalid results.")
     return rvec, tvec
-    # TODO(student): Estimate one marker pose with OpenCV solvePnP.
-    # Input: detected 2D marker corners, marker size, camera_matrix, and dist_coeffs.
-    # Output: rvec and tvec.
-    # `object_points` has already been prepared for you.
-    raise NotImplementedError("estimate_marker_pose is not implemented")
+   
 
 
 def render_virtual_object(frame, rvec, tvec, camera_matrix, dist_coeffs, vertices, faces):
-    # TODO(student): Render the loaded OBJ model on top of the ArUco marker.
-    # Input geometry from load_obj(...):
-    #   vertices: list of 3D points, equivalent to an array with shape (N, 3).
-    #   faces: list of triangle vertex indices, equivalent to an array with shape (M, 3).
-    # Output: the rendered frame.
-    #
-    # 1. Convert vertices and faces to numpy arrays if needed.
-    # 2. Normalize / scale / translate the model to fit above the marker.
-    # 3. Use cv2.projectPoints(...) to project 3D vertices to 2D image points.
-    # 4. For each face, collect its three projected 2D vertices.
-    # 5. Draw the triangle edges or filled triangle on frame.
-    #
-    # Model size normalization can be tricky at first; we recommend asking AI for help.
+    
     vertices_np = np.array(vertices, dtype=np.float32)
     faces_np = np.array(faces, dtype=np.int32)
     max_span=max(np.ptp(vertices_np, axis=0))
