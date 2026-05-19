@@ -22,7 +22,7 @@ ImageLike = np.ndarray
 
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parents[1] / "models" / "mnist_classifier.npz"
 model=MNISTClassifier()
-model.load_state_dict(torch.load(DEFAULT_MODEL_PATH))
+model.load_state_dict(torch.load(DEFAULT_MODEL_PATH,map_location='cpu', weights_only=False))
 model.eval()
 
 def preprocess_mnist_crop(board_crop: ImageLike) -> np.ndarray:
@@ -35,7 +35,7 @@ def preprocess_mnist_crop(board_crop: ImageLike) -> np.ndarray:
 
 def load_mnist_model(model_path: Path = DEFAULT_MODEL_PATH) -> object:
     model=MNISTClassifier()
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(model_path, map_location='cpu', weights_only=False))
     model.eval()
     return model
 
