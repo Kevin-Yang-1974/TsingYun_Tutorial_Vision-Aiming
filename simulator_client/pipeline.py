@@ -36,8 +36,8 @@ class FallbackPipeline:
         self.latency_multiplier = latency_multiplier
         self._warmup_process_noise = 15.0
         self._stable_process_noise = 1.0
-        self._warmup_measurement_noise = 0.2
-        self._stable_measurement_noise = 0.7
+        self._warmup_measurement_noise = 0.3
+        self._stable_measurement_noise = 0.8
         self._noise_warmup_frames = 8
         self.tracker = KalmanTracker(
             process_noise=self._warmup_process_noise,
